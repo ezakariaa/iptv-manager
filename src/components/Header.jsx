@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function Header({ title, channelCount, loading, onSearch, onOpenSettings }) {
+export default function Header({ title, channelCount, loading, onSearch, onOpenSettings, onToggleMenu }) {
   const [query, setQuery] = useState('');
 
   const handleChange = (e) => {
@@ -16,6 +16,7 @@ export default function Header({ title, channelCount, loading, onSearch, onOpenS
   return (
     <header className="header">
       <div className="header-left">
+        <button className="btn-menu" onClick={onToggleMenu} aria-label="Ouvrir le menu">☰</button>
         <h1 className="page-title">{title}</h1>
         {loading ? (
           <span className="loading-pill">Chargement…</span>

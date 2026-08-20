@@ -1,9 +1,9 @@
 # IPTV Manager
 
-Application de bureau (Windows) pour **gérer des playlists M3U** et **regarder des chaînes IPTV**,
-construite avec Electron + React. Les playlists sont téléchargées, parsées et stockées en local
-dans une base SQLite ; la lecture se fait soit **dans l'application**, soit dans un **lecteur externe**
-(VLC, MPC-HC, PotPlayer…).
+Application **Windows (Electron)** et **Android (Capacitor)** pour **gérer des playlists M3U** et
+**regarder des chaînes IPTV**. Les deux versions partagent la même interface React : les playlists
+sont téléchargées, parsées et stockées en local dans une base SQLite ; la lecture se fait soit
+**dans l'application**, soit dans un **lecteur externe**.
 
 ---
 
@@ -115,6 +115,66 @@ grosses playlists.
   écrans noirs sur certaines configurations GPU Windows.
 - Le dossier `dist/` (bundle compilé) n'est pas versionné : il est régénéré par
   `npm run build-renderer`.
+
+---
+
+# Version Android (APK)
+
+La même interface React tourne dans une WebView via [Capacitor](https://capacitorjs.com).
+Seule la couche d'accès au système change, isolée dans `src/platform/` :
+
+| Besoin              | Windows (Electron)                        | Android (Capacitor)                                  |
+|---------------------|-------------------------------------------|------------------------------------------------------|
+| Base de données     | sql.js dans le process principal, fichier `.db` | sql.js dans la WebView, image persistée en IndexedDB |
+| Téléchargement M3U  | modules `http`/`https` de Node            | `CapacitorHttp` (requête native, donc hors CORS)     |
+| Réglages            | `settings.json` dans `userData`           | `localStorage`                                       |
+| Lecteur externe     | `spawn()` sur un `.exe` détecté           | intent Android (VLC, MX Player… au choix du système) |
+| Lecteur interne     | hls.js / mpegts.js                        | identique                                            |
+
+Les composants React ne testent jamais la plateforme : `src/platform/index.js` renvoie
+`window.iptv` (posé par `preload.js`) sous Electron, et construit sinon l'équivalent mobile,
+qui respecte le même contrat.
+
+## Récupérer l'APK
+
+Le workflow [`.github/workflows/android.yml`](.github/workflows/android.yml) compile l'APK à chaque
+push sur `main`, ou à la demande via **Actions → Build APK Android → Run workflow**.
+L'APK se télécharge dans les artefacts du run (`iptv-manager-debug-apk`), ou en ligne de commande :
+
+```bash
+gh run download --name iptv-manager-debug-apk
+```
+
+C'est un **APK de debug**, signé avec la clé de debug d'Android : il s'installe en autorisant
+les « sources inconnues », mais ne peut pas être publié sur le Play Store en l'état.
+
+## Compiler l'APK en local
+
+Nécessite **JDK 17** et le **SDK Android** (platform 34 + build-tools), via Android Studio
+ou les command-line tools, avec `ANDROID_HOME` renseigné.
+
+```bash
+npm run build-mobile    # bundle React → www/
+npx cap sync android    # copie www/ et les plugins dans le projet Android
+npm run apk             # enchaîne les deux puis gradlew assembleDebug
+```
+
+L'APK est produit dans `android/app/build/outputs/apk/debug/app-debug.apk`.
+`npm run open-android` ouvre le projet dans Android Studio (build signé, émulateur, débogage).
+
+## Limites connues sur Android
+
+- **Lecture interne et CORS** — la WebView sert l'application depuis `https://localhost`, si bien
+  que hls.js et mpegts.js sont soumis à la politique d'origine croisée. Un serveur IPTV qui ne
+  renvoie pas d'en-tête `Access-Control-Allow-Origin` fera échouer la lecture interne. Dans ce cas,
+  basculez sur **Application externe** dans les paramètres : le flux part alors vers VLC ou
+  MX Player par un intent, sans contrainte CORS. Le téléchargement des playlists n'est jamais
+  concerné, puisqu'il passe par la couche HTTP native.
+- **Flux en clair (http://)** — autorisés via `allowMixedContent`, désactivé par défaut sur Android.
+- **Rafraîchissement automatique** — il n'a lieu que pendant que l'application est ouverte ;
+  il n'y a pas de tâche d'arrière-plan.
+
+---
 
 ## Avertissement
 

@@ -546,3 +546,85 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
+
+/* ─── Écran de démarrage en échec ─────────────────────── */
+.fatal-error {
+  height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 24px; text-align: center;
+}
+.fatal-error h1 { font-size: 18px; color: var(--accent); }
+.fatal-error p  { color: var(--text-muted); font-size: 13px; }
+
+/* ─── Bouton menu (tiroir latéral) ────────────────────── */
+.btn-menu {
+  display: none;              /* visible uniquement en dessous de 820 px */
+  background: none; border: none;
+  color: var(--text); font-size: 20px;
+  padding: 4px 6px; cursor: pointer; line-height: 1;
+}
+
+.sidebar-scrim { display: none; }
+
+/* ─── Adaptation tactile / petits écrans ──────────────── */
+@media (max-width: 820px) {
+  .btn-menu { display: block; }
+
+  /* La sidebar sort du flux et glisse par-dessus la grille. */
+  .sidebar {
+    position: fixed; top: 0; bottom: 0; left: 0;
+    z-index: 900;
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .app.menu-open .sidebar { transform: none; }
+
+  .app.menu-open .sidebar-scrim {
+    display: block;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 800;
+  }
+
+  .header {
+    padding: 10px 12px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    gap: 8px;
+  }
+  .header-left  { gap: 8px; min-width: 0; }
+  .header-right { flex: 1; justify-content: flex-end; }
+  .page-title {
+    font-size: 15px;
+    max-width: 38vw;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .channel-count, .loading-pill { display: none; }
+  .search-box { flex: 1; min-width: 0; }
+
+  /* Vignettes plus petites : 3 colonnes sur un téléphone courant. */
+  .channel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px; padding: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  .channel-card { padding: 10px 6px 8px; gap: 6px; }
+  .channel-logo-wrap { width: 48px; height: 48px; }
+
+  /* Le survol n'existe pas au doigt : les actions restent visibles. */
+  .channel-card:hover { transform: none; }
+
+  .modal { width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; }
+  .modal-backdrop { align-items: flex-end; }
+  .modal-body { padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+
+  /* Cibles tactiles : 44 px minimum. */
+  .btn-primary, .btn-secondary, .player-btn, .mode-btn { min-height: 44px; }
+}
+
+/* Supprime le délai de 300 ms au tap et le zoom par double-tap. */
+@media (pointer: coarse) {
+  button, .channel-card, .nav-item, .group-item { touch-action: manipulation; }
+}

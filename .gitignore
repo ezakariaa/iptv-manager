@@ -4,6 +4,9 @@ node_modules/
 # Build renderer (régénéré par `npm run build-renderer`)
 dist/
 
+# Bundle web pour Android (régénéré par `npm run build-mobile`)
+www/
+
 # Build electron-builder
 release/
 

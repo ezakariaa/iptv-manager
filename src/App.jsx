@@ -6,6 +6,7 @@ import AddPlaylistModal from './components/AddPlaylistModal';
 import SettingsModal from './components/SettingsModal';
 import PlayerOverlay from './components/PlayerOverlay';
 import Toast from './components/Toast';
+import { iptv, isMobile } from './platform';
 
 export default function App() {
   const [playlists, setPlaylists]   = useState([]);
@@ -17,18 +18,19 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [toast, setToast]             = useState(null);
   const [playing, setPlaying]         = useState(null); // chaîne lue par le lecteur interne
+  const [menuOpen, setMenuOpen]       = useState(false); // tiroir latéral (petits écrans)
   const searchTimer                 = useRef(null);
 
   const notify = (message, type = 'info') =>
     setToast({ message, type, id: Date.now() });
 
   const loadPlaylists = async () => {
-    const data = await window.iptv.getPlaylists();
+    const data = await iptv.getPlaylists();
     setPlaylists(data);
   };
 
   const loadGroups = async (playlistId) => {
-    const data = await window.iptv.getGroups(playlistId);
+    const data = await iptv.getGroups(playlistId);
     setGroups(data);
   };
 
@@ -42,7 +44,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    window.iptv.getChannels(filters)
+    iptv.getChannels(filters)
       .then((data) => { if (!cancelled) { setChannels(data); setLoading(false); } })
       .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -50,7 +52,7 @@ export default function App() {
 
   // Listen for auto-refresh events from main process
   useEffect(() => {
-    const off = window.iptv.onAutoRefreshed(() => {
+    const off = iptv.onAutoRefreshed(() => {
       loadPlaylists();
       setFilters((f) => ({ ...f })); // trigger channel reload
       notify('Playlist mise à jour automatiquement', 'info');
@@ -81,7 +83,7 @@ export default function App() {
   const handleAddPlaylist = async ({ name, url }) => {
     setLoading(true);
     try {
-      const result = await window.iptv.addPlaylist({ name, url });
+      const result = await iptv.addPlaylist({ name, url });
       await loadPlaylists();
       setFilters({ search: '', groupTitle: '', playlistId: result.id, favoritesOnly: false });
       setShowModal(false);
@@ -93,7 +95,7 @@ export default function App() {
   };
 
   const handleDeletePlaylist = async (id) => {
-    await window.iptv.deletePlaylist(id);
+    await iptv.deletePlaylist(id);
     await loadPlaylists();
     if (filters.playlistId === id) handleShowAll();
     notify('Playlist supprimée', 'info');
@@ -102,7 +104,7 @@ export default function App() {
   const handleRefreshPlaylist = async (playlist) => {
     setLoading(true);
     try {
-      const result = await window.iptv.refreshPlaylist({ id: playlist.id, url: playlist.url });
+      const result = await iptv.refreshPlaylist({ id: playlist.id, url: playlist.url });
       await loadPlaylists();
       setFilters((f) => ({ ...f }));
       notify(`Playlist mise à jour : ${result.channelCount} chaînes`, 'success');
@@ -116,7 +118,7 @@ export default function App() {
   // Le process principal décide : lecteur interne (overlay) ou lecteur externe.
   const handleOpenStream = async (channel) => {
     try {
-      const result = await window.iptv.openStream(channel.url);
+      const result = await iptv.openStream(channel.url);
       if (result?.mode === 'internal') setPlaying(channel);
       else if (result?.mode === 'browser') notify('Aucun lecteur trouvé — ouverture dans le navigateur', 'info');
     } catch (err) {
@@ -127,30 +129,35 @@ export default function App() {
   // Depuis le lecteur interne : basculer vers le lecteur externe.
   const handlePlayExternal = async (channel) => {
     setPlaying(null);
-    await window.iptv.openStreamExternal(channel.url);
+    await iptv.openStreamExternal(channel.url);
   };
 
   const handleToggleFavorite = async (channelId) => {
-    const newVal = await window.iptv.toggleFavorite(channelId);
+    const newVal = await iptv.toggleFavorite(channelId);
     setChannels((prev) => {
       if (filters.favoritesOnly && newVal === 0) return prev.filter((c) => c.id !== channelId);
       return prev.map((c) => (c.id === channelId ? { ...c, is_favorite: newVal } : c));
     });
   };
 
+  // Sur mobile la sidebar recouvre la grille : toute navigation la referme.
+  const closeMenuAfter = (fn) => (...args) => { setMenuOpen(false); return fn(...args); };
+
   const title = getTitle(filters, playlists);
 
   return (
-    <div className="app">
+    <div className={`app${isMobile ? ' is-mobile' : ''}${menuOpen ? ' menu-open' : ''}`}>
+      <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} />
+
       <Sidebar
         playlists={playlists}
         groups={groups}
         filters={filters}
-        onSelectPlaylist={handleSelectPlaylist}
-        onSelectGroup={handleSelectGroup}
-        onShowAll={handleShowAll}
-        onShowFavorites={handleShowFavorites}
-        onAddPlaylist={() => setShowModal(true)}
+        onSelectPlaylist={closeMenuAfter(handleSelectPlaylist)}
+        onSelectGroup={closeMenuAfter(handleSelectGroup)}
+        onShowAll={closeMenuAfter(handleShowAll)}
+        onShowFavorites={closeMenuAfter(handleShowFavorites)}
+        onAddPlaylist={closeMenuAfter(() => setShowModal(true))}
         onDeletePlaylist={handleDeletePlaylist}
         onRefreshPlaylist={handleRefreshPlaylist}
       />
@@ -162,6 +169,7 @@ export default function App() {
           loading={loading}
           onSearch={handleSearch}
           onOpenSettings={() => setShowSettings(true)}
+          onToggleMenu={() => setMenuOpen((o) => !o)}
         />
         <ChannelGrid
           channels={channels}

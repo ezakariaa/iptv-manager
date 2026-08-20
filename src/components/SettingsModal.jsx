@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { iptv, isMobile } from '../platform';
 
 export default function SettingsModal({ onClose }) {
   const [settings, setSettings]     = useState(null);
@@ -6,23 +7,23 @@ export default function SettingsModal({ onClose }) {
   const [saved, setSaved]           = useState(false);
 
   useEffect(() => {
-    window.iptv.getSettings().then(setSettings);
+    iptv.getSettings().then(setSettings);
   }, []);
 
   const handleSelectPreset = async (playerPath) => {
-    await window.iptv.setPlayerPath(playerPath);
+    await iptv.setPlayerPath(playerPath);
     setSettings((s) => ({ ...s, playerPath, playerMode: 'external' }));
     flash();
   };
 
   const handleClear = async () => {
-    await window.iptv.setPlayerPath(null);
+    await iptv.setPlayerPath(null);
     setSettings((s) => ({ ...s, playerPath: null, playerMode: 'external' }));
     flash();
   };
 
   const handleSelectMode = async (mode) => {
-    await window.iptv.setPlayerMode(mode);
+    await iptv.setPlayerMode(mode);
     setSettings((s) => ({ ...s, playerMode: mode }));
     flash();
   };
@@ -30,7 +31,7 @@ export default function SettingsModal({ onClose }) {
   const handleBrowse = async () => {
     setBrowsing(true);
     try {
-      const chosen = await window.iptv.browsePlayer();
+      const chosen = await iptv.browsePlayer();
       if (chosen) {
         setSettings((s) => ({ ...s, playerPath: chosen, playerMode: 'external' }));
         flash();
@@ -65,6 +66,10 @@ export default function SettingsModal({ onClose }) {
             {internal ? (
               <div className="player-auto">
                 📺 <strong>Lecteur interne</strong> — lecture dans l'application
+              </div>
+            ) : isMobile ? (
+              <div className="player-auto">
+                📱 <strong>Application externe</strong> — Android proposera VLC, MX Player…
               </div>
             ) : activePlayer ? (
               <div className="player-active">
@@ -103,8 +108,8 @@ export default function SettingsModal({ onClose }) {
               >
                 <span className="player-icon">🖥</span>
                 <span className="mode-text">
-                  Lecteur externe
-                  <small>VLC, MPC-HC, PotPlayer…</small>
+                  {isMobile ? 'Application externe' : 'Lecteur externe'}
+                  <small>{isMobile ? 'Ouvrir le flux dans VLC, MX Player…' : 'VLC, MPC-HC, PotPlayer…'}</small>
                 </span>
                 {!internal && <span className="check">✓</span>}
               </button>
@@ -112,7 +117,7 @@ export default function SettingsModal({ onClose }) {
           </div>
 
           {/* Lecteurs détectés */}
-          {detected.length > 0 && !internal && (
+          {!isMobile && detected.length > 0 && !internal && (
             <div className="settings-section">
               <p className="settings-label">Lecteurs détectés</p>
               <div className="player-list">
@@ -133,7 +138,7 @@ export default function SettingsModal({ onClose }) {
           )}
 
           {/* Parcourir */}
-          {!internal && (
+          {!isMobile && !internal && (
             <div className="settings-section">
               <p className="settings-label">Lecteur personnalisé</p>
               <button
@@ -149,10 +154,19 @@ export default function SettingsModal({ onClose }) {
             </div>
           )}
 
+          {isMobile && !internal && (
+            <p className="settings-hint">
+              Le flux est transmis à une autre application via le sélecteur Android.
+              Installez VLC ou MX Player si aucune proposition n'apparaît.
+            </p>
+          )}
+
           {internal && (
             <p className="settings-hint">
-              Le lecteur interne gère les flux HLS (.m3u8) et MPEG-TS. Raccourcis : Espace = lecture/pause,
-              F = plein écran, M = muet, Échap = fermer.
+              Le lecteur interne gère les flux HLS (.m3u8) et MPEG-TS.
+              {isMobile
+                ? " Si un flux refuse de démarrer, basculez sur une application externe."
+                : ' Raccourcis : Espace = lecture/pause, F = plein écran, M = muet, Échap = fermer.'}
             </p>
           )}
 

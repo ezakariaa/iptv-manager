@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover : l'app dessine sous l'encoche, les marges de
+         sécurité sont reprises en CSS via env(safe-area-inset-*). -->
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0d0d1a" />
+    <title>IPTV Manager</title>
+    <!-- 'wasm-unsafe-eval' est requis par sql.js (SQLite compilé en WebAssembly).
+         connect-src/media-src ouverts : les flux et les playlists viennent de
+         serveurs arbitraires fournis par l'utilisateur. -->
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' 'unsafe-inline' https://localhost;
+               script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://localhost;
+               img-src * data: blob:;
+               media-src * blob: data:;
+               connect-src * blob: data:;
+               worker-src 'self' blob:; child-src 'self' blob:;" />
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "appId": "com.iptv.manager",
+  "appName": "IPTV Manager",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#0d0d1a"
+  }
+}
