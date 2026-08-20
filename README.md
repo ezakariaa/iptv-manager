@@ -125,7 +125,7 @@ Seule la couche d'accès au système change, isolée dans `src/platform/` :
 
 | Besoin              | Windows (Electron)                        | Android (Capacitor)                                  |
 |---------------------|-------------------------------------------|------------------------------------------------------|
-| Base de données     | sql.js dans le process principal, fichier `.db` | sql.js dans la WebView, image persistée en IndexedDB |
+| Base de données     | sql.js dans le process principal, fichier `.db` | sql.js dans la WebView (binaire WebAssembly intégré au bundle), image persistée en IndexedDB |
 | Téléchargement M3U  | modules `http`/`https` de Node            | `CapacitorHttp` (requête native, donc hors CORS)     |
 | Réglages            | `settings.json` dans `userData`           | `localStorage`                                       |
 | Lecteur externe     | `spawn()` sur un `.exe` détecté           | intent Android (VLC, MX Player… au choix du système) |
@@ -173,6 +173,10 @@ L'APK est produit dans `android/app/build/outputs/apk/debug/app-debug.apk`.
 - **Flux en clair (http://)** — autorisés via `allowMixedContent`, désactivé par défaut sur Android.
 - **Rafraîchissement automatique** — il n'a lieu que pendant que l'application est ouverte ;
   il n'y a pas de tâche d'arrière-plan.
+- **Binaire WebAssembly** — il est intégré au bundle en data URI plutôt que servi comme
+  fichier séparé : la WebView refuse de le livrer par `fetch()` depuis `https://localhost`,
+  ce qui empêchait sql.js de démarrer. Le bundle mobile pèse donc ~900 Ko de plus que la
+  version desktop, pour un APK d'environ 4,5 Mo.
 
 ---
 

@@ -3,15 +3,14 @@
  *
  * Différences avec `webpack.config.js` (Electron) :
  *   - sortie dans `www/`, qui est le `webDir` lu par Capacitor ;
- *   - le binaire WebAssembly de sql.js est copié à la racine des assets, car
- *     sur mobile la base tourne dans la WebView et non dans le process Node ;
+ *   - le binaire WebAssembly de sql.js est intégré au bundle, la WebView
+ *     refusant de le servir par fetch() depuis l'origine https://localhost ;
  *   - les modules Node auxquels sql.js se réfère sont neutralisés ;
  *   - pas de source map, pour ne pas alourdir l'APK de plusieurs mégaoctets.
  */
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -39,17 +38,18 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
+      {
+        // Émis en data URI plutôt qu'en fichier séparé : le module est ainsi
+        // remis à sql.js en mémoire, sans requête réseau ni contrainte de CSP.
+        test: /sql-wasm\.wasm$/,
+        type: 'asset/inline',
+      },
     ],
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.mobile.html',
       filename: 'index.html',
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        { from: 'node_modules/sql.js/dist/sql-wasm.wasm', to: 'sql-wasm.wasm' },
-      ],
     }),
   ],
   performance: { hints: false },

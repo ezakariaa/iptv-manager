@@ -7,9 +7,21 @@
  */
 
 import initSqlJs from 'sql.js';
+// Le binaire est intégré au bundle sous forme de data URI (voir la règle
+// `asset/inline` de webpack.mobile.config.js) : sql.js va sinon le chercher
+// par fetch(), requête que la WebView refuse de servir depuis https://localhost.
+import wasmDataUri from 'sql.js/dist/sql-wasm.wasm';
 import { idbGet, idbSet } from './idb';
 
 const DB_KEY = 'sqlite-image';
+
+/** Convertit le data URI du module WebAssembly en octets. */
+function decodeWasm(dataUri) {
+  const binary = atob(dataUri.slice(dataUri.indexOf(',') + 1));
+  const bytes  = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 let db = null;
 let saveTimer = null;
@@ -17,7 +29,7 @@ let saveTimer = null;
 export async function init() {
   if (db) return;
 
-  const SQL = await initSqlJs({ locateFile: (file) => file });
+  const SQL = await initSqlJs({ wasmBinary: decodeWasm(wasmDataUri) });
 
   const stored = await idbGet(DB_KEY);
   db = stored ? new SQL.Database(new Uint8Array(stored)) : new SQL.Database();

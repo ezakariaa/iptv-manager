@@ -1,0 +1,15 @@
+# Normalise les fins de ligne : le dépôt est en LF, y compris pour les scripts
+# exécutés par le runner Linux qui compile l'APK.
+* text=auto eol=lf
+
+# Scripts Windows : CRLF obligatoire
+*.bat text eol=crlf
+*.cmd text eol=crlf
+gradlew.bat text eol=crlf
+
+# Binaires
+*.png binary
+*.jpg binary
+*.wasm binary
+*.jar binary
+*.apk binary
