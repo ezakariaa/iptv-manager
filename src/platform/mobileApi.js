@@ -13,6 +13,7 @@
 
 import { CapacitorHttp } from '@capacitor/core';
 import { AppLauncher } from '@capacitor/app-launcher';
+import { App as CapApp } from '@capacitor/app';
 import { parseM3U } from '../../utils/m3uParser';
 import * as db from './mobileDb';
 
@@ -135,6 +136,18 @@ export async function createMobileApi() {
     // système qui choisit le lecteur au moment de l'ouverture du flux.
     setPlayerPath: async () => true,
     browsePlayer:  async () => null,
+
+    /**
+     * Bouton retour matériel. Sans interception, Android quitte l'application
+     * dès le premier appui, y compris depuis le lecteur plein écran.
+     * Le callback renvoie `true` s'il a consommé l'appui.
+     */
+    onBackButton: (cb) => {
+      const handle = CapApp.addListener('backButton', () => {
+        if (!cb()) CapApp.exitApp();
+      });
+      return () => { handle.then((h) => h.remove()); };
+    },
 
     onAutoRefreshed: (cb) => {
       refreshListeners.add(cb);

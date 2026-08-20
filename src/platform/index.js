@@ -13,7 +13,9 @@ let ready = null;
 export function initPlatform() {
   if (ready) return ready;
   ready = window.iptv
-    ? Promise.resolve(window.iptv)
+    // Windows n'a pas de bouton retour matériel : on complète le contrat par
+    // un abonnement inerte, pour que les composants restent identiques.
+    ? Promise.resolve({ ...window.iptv, onBackButton: () => () => {} })
     : import('./mobileApi').then((m) => m.createMobileApi());
   return ready;
 }

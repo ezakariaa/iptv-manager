@@ -60,6 +60,16 @@ export default function App() {
     return off;
   }, []);
 
+  // Le retour ferme la couche visible la plus haute ; s'il n'y en a aucune,
+  // renvoyer false laisse Android quitter l'application.
+  useEffect(() => iptv.onBackButton(() => {
+    if (playing)      { setPlaying(null);     return true; }
+    if (showModal)    { setShowModal(false);  return true; }
+    if (showSettings) { setShowSettings(false); return true; }
+    if (menuOpen)     { setMenuOpen(false);   return true; }
+    return false;
+  }), [playing, showModal, showSettings, menuOpen]);
+
   const handleSearch = (query) => {
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(
