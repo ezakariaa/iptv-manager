@@ -1,0 +1,22 @@
+# Dépendances
+node_modules/
+
+# Build renderer (régénéré par `npm run build-renderer`)
+dist/
+
+# Build electron-builder
+release/
+
+# Base de données locale / réglages (stockés dans userData, jamais ici)
+*.db
+/settings.json
+
+# Logs & divers
+npm-debug.log*
+yarn-error.log*
+*.log
+.DS_Store
+Thumbs.db
+
+# Config locale de l'outil Claude Code
+.claude/
