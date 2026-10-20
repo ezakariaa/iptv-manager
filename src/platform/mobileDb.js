@@ -118,6 +118,14 @@ export function updatePlaylist(id, channelCount, now) {
   save();
 }
 
+export function renamePlaylist(id, name) {
+  const clean = String(name).trim();
+  if (!clean) return null;
+  run('UPDATE playlists SET name = ? WHERE id = ?', [clean, id]);
+  save();
+  return clean;
+}
+
 export function deletePlaylist(id) {
   run('DELETE FROM channels WHERE playlist_id = ?', [id]);
   run('DELETE FROM playlists WHERE id = ?', [id]);

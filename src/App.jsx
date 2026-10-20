@@ -111,6 +111,17 @@ export default function App() {
     notify('Playlist supprimée', 'info');
   };
 
+  const handleRenamePlaylist = async (id, name) => {
+    try {
+      const newName = await iptv.renamePlaylist({ id, name });
+      setPlaylists((prev) => prev.map((p) => (p.id === id ? { ...p, name: newName } : p))
+                                 .sort((a, b) => a.name.localeCompare(b.name)));
+      notify(`Playlist renommée en « ${newName} »`, 'success');
+    } catch (err) {
+      notify(err.message || 'Renommage impossible', 'error');
+    }
+  };
+
   const handleRefreshPlaylist = async (playlist) => {
     setLoading(true);
     try {
@@ -170,6 +181,7 @@ export default function App() {
         onAddPlaylist={closeMenuAfter(() => setShowModal(true))}
         onDeletePlaylist={handleDeletePlaylist}
         onRefreshPlaylist={handleRefreshPlaylist}
+        onRenamePlaylist={handleRenamePlaylist}
       />
 
       <div className="main">

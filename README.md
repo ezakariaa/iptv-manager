@@ -135,11 +135,26 @@ Les composants React ne testent jamais la plateforme : `src/platform/index.js` r
 `window.iptv` (posé par `preload.js`) sous Electron, et construit sinon l'équivalent mobile,
 qui respecte le même contrat.
 
-## Récupérer l'APK
+## Télécharger l'application
 
-Le workflow [`.github/workflows/android.yml`](.github/workflows/android.yml) compile l'APK à chaque
-push sur `main`, ou à la demande via **Actions → Build APK Android → Run workflow**.
-L'APK se télécharge dans les artefacts du run (`iptv-manager-debug-apk`), ou en ligne de commande :
+Les builds Android et Windows sont publiés comme artefacts du workflow GitHub Actions :
+
+- [Voir les builds et télécharger l'APK](https://github.com/ezakariaa/iptv-manager/actions/workflows/android.yml)
+  — artefact `iptv-manager-debug-apk`
+- [Voir les builds et télécharger l'installateur Windows](https://github.com/ezakariaa/iptv-manager/actions/workflows/android.yml)
+  — artefact `iptv-manager-windows-installer`
+
+Ouvrez la dernière exécution réussie du workflow, puis téléchargez l'artefact souhaité dans la section
+**Artifacts**. Les artefacts GitHub Actions sont temporaires et expirent selon la durée de conservation
+configurée par GitHub.
+
+L'installateur Windows est créé par `electron-builder`. L'APK est un build de debug signé avec la clé
+de debug Android : il s'installe en autorisant les « sources inconnues », mais ne peut pas être publié
+sur le Play Store en l'état.
+
+Le workflow [`.github/workflows/android.yml`](.github/workflows/android.yml) compile les deux versions à chaque
+push sur `main`, ou à la demande via **Actions → Build APK Android and Windows → Run workflow**.
+L'APK peut aussi être téléchargé en ligne de commande :
 
 ```bash
 gh run download --name iptv-manager-debug-apk

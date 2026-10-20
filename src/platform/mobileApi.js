@@ -105,6 +105,12 @@ export async function createMobileApi() {
     toggleFavorite: async (id) => db.toggleFavorite(id),
     deletePlaylist: async (id) => { db.deletePlaylist(id); return true; },
 
+    renamePlaylist: async ({ id, name }) => {
+      const clean = db.renamePlaylist(id, name);
+      if (!clean) throw new Error('Le nom ne peut pas être vide.');
+      return clean;
+    },
+
     addPlaylist: async ({ name, url }) => {
       const id = db.addPlaylist(name, url);
       if (!id) throw new Error('Cette URL de playlist existe déjà.');

@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function Sidebar({
   playlists, groups, filters,
   onSelectPlaylist, onSelectGroup, onShowAll, onShowFavorites,
-  onAddPlaylist, onDeletePlaylist, onRefreshPlaylist,
+  onAddPlaylist, onDeletePlaylist, onRefreshPlaylist, onRenamePlaylist,
 }) {
   const [confirmId, setConfirmId] = useState(null);
+  const [editId, setEditId]       = useState(null);
+  const [draft, setDraft]         = useState('');
+  const inputRef                  = useRef(null);
+
+  useEffect(() => {
+    if (editId !== null) inputRef.current?.select();
+  }, [editId]);
+
+  const startRename = (e, playlist) => {
+    e.stopPropagation();
+    setConfirmId(null);
+    setEditId(playlist.id);
+    setDraft(playlist.name);
+  };
+
+  const cancelRename = () => { setEditId(null); setDraft(''); };
+
+  const commitRename = (playlist) => {
+    const name = draft.trim();
+    if (name && name !== playlist.name) onRenamePlaylist(playlist.id, name);
+    cancelRename();
+  };
+
+  const handleRenameKey = (e, playlist) => {
+    if (e.key === 'Enter')       { e.preventDefault(); commitRename(playlist); }
+    else if (e.key === 'Escape') { e.preventDefault(); cancelRename(); }
+  };
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
@@ -56,23 +83,47 @@ export default function Sidebar({
             {playlists.map((pl) => (
               <li key={pl.id}>
                 <div
-                  className={`playlist-item ${filters.playlistId === pl.id ? 'active' : ''}`}
-                  onClick={() => onSelectPlaylist(pl.id)}
+                  className={`playlist-item ${filters.playlistId === pl.id ? 'active' : ''} ${editId === pl.id ? 'editing' : ''}`}
+                  onClick={() => editId !== pl.id && onSelectPlaylist(pl.id)}
+                  onDoubleClick={(e) => startRename(e, pl)}
                 >
-                  <span className="playlist-name" title={pl.name}>{pl.name}</span>
-                  <span className="playlist-count">{pl.channel_count}</span>
-                  <div className="playlist-actions">
-                    <button
-                      className="btn-icon"
-                      title="Actualiser"
-                      onClick={(e) => handleRefresh(e, pl)}
-                    >↻</button>
-                    <button
-                      className={`btn-icon btn-delete ${confirmId === pl.id ? 'confirm' : ''}`}
-                      title={confirmId === pl.id ? 'Confirmer ?' : 'Supprimer'}
-                      onClick={(e) => handleDelete(e, pl.id)}
-                    >×</button>
-                  </div>
+                  {editId === pl.id ? (
+                    <input
+                      ref={inputRef}
+                      className="playlist-rename-input"
+                      value={draft}
+                      maxLength={80}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => handleRenameKey(e, pl)}
+                      onBlur={() => commitRename(pl)}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <span className="playlist-name" title={`${pl.name} — double-clic pour renommer`}>
+                        {pl.name}
+                      </span>
+                      <span className="playlist-count">{pl.channel_count}</span>
+                      <div className="playlist-actions">
+                        <button
+                          className="btn-icon"
+                          title="Renommer"
+                          onClick={(e) => startRename(e, pl)}
+                        >✎</button>
+                        <button
+                          className="btn-icon"
+                          title="Actualiser"
+                          onClick={(e) => handleRefresh(e, pl)}
+                        >↻</button>
+                        <button
+                          className={`btn-icon btn-delete ${confirmId === pl.id ? 'confirm' : ''}`}
+                          title={confirmId === pl.id ? 'Confirmer ?' : 'Supprimer'}
+                          onClick={(e) => handleDelete(e, pl.id)}
+                        >×</button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </li>
             ))}

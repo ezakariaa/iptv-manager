@@ -186,6 +186,12 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('delete-playlist', (_, id) => { db.deletePlaylist(id); return true; });
+
+  ipcMain.handle('rename-playlist', (_, { id, name }) => {
+    const clean = db.renamePlaylist(id, name);
+    if (!clean) throw new Error('Le nom ne peut pas être vide.');
+    return clean;
+  });
   ipcMain.handle('get-channels',    (_, filters) => db.getChannels(filters));
   ipcMain.handle('toggle-favorite', (_, id) => db.toggleFavorite(id));
   ipcMain.handle('get-groups',      (_, playlistId) => db.getGroups(playlistId));

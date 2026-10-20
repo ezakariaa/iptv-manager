@@ -96,6 +96,14 @@ function updatePlaylist(id, channelCount) {
   save();
 }
 
+function renamePlaylist(id, name) {
+  const clean = String(name).trim();
+  if (!clean) return null;
+  run('UPDATE playlists SET name = ? WHERE id = ?', [clean, id]);
+  save();
+  return clean;
+}
+
 function deletePlaylist(id) {
   run('DELETE FROM channels WHERE playlist_id = ?', [id]);
   run('DELETE FROM playlists WHERE id = ?', [id]);
@@ -153,4 +161,4 @@ function getGroups(playlistId = null) {
   return rows.map((r) => r.group_title);
 }
 
-module.exports = { init, getPlaylists, addPlaylist, updatePlaylist, deletePlaylist, insertChannels, getChannels, toggleFavorite, getGroups };
+module.exports = { init, getPlaylists, addPlaylist, updatePlaylist, renamePlaylist, deletePlaylist, insertChannels, getChannels, toggleFavorite, getGroups };
